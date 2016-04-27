@@ -115,4 +115,9 @@ public class FileGuestbookStore implements GuestbookStore {
 		return null;
 	}
 
+	@Override
+	public boolean close() {
+		return true;
+	}
+
 }

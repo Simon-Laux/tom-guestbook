@@ -1,6 +1,7 @@
 package de.simonlaux.guestbook;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -10,14 +11,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-
 public class GuestbookServlet extends HttpServlet {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 	private int i;
-	GuestbookStore store = new FileGuestbookStore();
+	GuestbookStore store = new MySqlGuestbookStore("127.0.0.1", 3306, "guestbook", "guestbook", "123456","book");
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -71,7 +71,8 @@ public class GuestbookServlet extends HttpServlet {
 
 			while (l1.size() > i) {
 				GuestbookEntry eintrag = l1.get(i);
-				raus = raus + ("<h4>Am " + eintrag.getDate() + " schrieb " + eintrag.getEmail() + ":</h1><p>"
+				SimpleDateFormat sDF = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+				raus = raus + ("<h4>Am " + sDF.format(eintrag.getDate()) + " schrieb " + eintrag.getEmail() + ":</h1><p>"
 						+ eintrag.getInhalt() + "</p><tr>");
 				i++;
 			}
@@ -86,6 +87,7 @@ public class GuestbookServlet extends HttpServlet {
 	}
 
 	public void destroy() {
+		store.close();
 		System.out.println("Guestbookservice beendet");
 	}
 

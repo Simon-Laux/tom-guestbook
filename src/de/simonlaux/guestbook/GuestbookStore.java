@@ -6,4 +6,6 @@ public interface GuestbookStore {
 	void add(GuestbookEntry entry);
 
 	List<GuestbookEntry> getAll();
+	
+	boolean close();
 }
