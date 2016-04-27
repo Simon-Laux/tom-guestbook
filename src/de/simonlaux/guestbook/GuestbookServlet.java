@@ -11,13 +11,15 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 public class GuestbookServlet extends HttpServlet {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 	private int i;
-	GuestbookStore store = new MySqlGuestbookStore("127.0.0.1", 3306, "guestbook", "guestbook", "123456","book");
+	GuestbookStore store;
+	HtmlScan scan = new HtmlScan("p", "b", "h5", "h6");
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -45,13 +47,8 @@ public class GuestbookServlet extends HttpServlet {
 		}
 
 		if (cooldown <= (new Date().getTime()) && lasttext != req.getParameter("M").hashCode()) {
-			String content=req.getParameter("M");
-			content=content.replaceAll("<b>", "brgrg5");
-			content=content.replaceAll("</b>", "brgrg6");
-			content=content.replaceAll("<", "<!-- ");
-			content=content.replaceAll(">", "-->");
-			content=content.replaceAll("brgrg5", "<b>");
-			content=content.replaceAll("brgrg6", "</b>");
+			String content = req.getParameter("M");
+			content = scan.filter(content);
 			store.add(new GuestbookEntry(new Date(), req.getParameter("email"), content));
 			System.out.println("Aufrufzähler: " + i++ + " über post");
 			req.setAttribute("Inhalt", writing(store.getAll()));
@@ -72,8 +69,8 @@ public class GuestbookServlet extends HttpServlet {
 			while (l1.size() > i) {
 				GuestbookEntry eintrag = l1.get(i);
 				SimpleDateFormat sDF = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-				raus = raus + ("<h4>Am " + sDF.format(eintrag.getDate()) + " schrieb " + eintrag.getEmail() + ":</h1><p>"
-						+ eintrag.getInhalt() + "</p><tr>");
+				raus = raus + ("<h4>Am " + sDF.format(eintrag.getDate()) + " schrieb " + eintrag.getEmail()
+						+ ":</h1><p>" + eintrag.getInhalt() + "</p><tr>");
 				i++;
 			}
 			return raus;
@@ -83,11 +80,23 @@ public class GuestbookServlet extends HttpServlet {
 	}
 
 	public void init(ServletConfig config) throws ServletException {
+		try {
+			store = new MySqlGuestbookStore("127.0.0.1", 3306, "guestbook", "guestbook", "123456", "book");
+		} catch (StoreInitException e) {
+			System.out.println("Sorry, there is a Problem with MySQL:\n" + e.getMessage()
+					+ "\nWe try to Fall back to your alternative");
+			System.out.println("Falle auf Dateimodus zurück...");
+			store = new FileGuestbookStore();
+		}
 		System.out.println("Guestbookservice gestartet");
 	}
 
 	public void destroy() {
-		store.close();
+		if (store.close()) {
+			System.out.println("Verbindung erfolgreich getrennt");
+		} else {
+			System.out.println("Verbindung zum Gästebuchspeicher konnte NICHT getrennt werden!");
+		}
 		System.out.println("Guestbookservice beendet");
 	}
 
